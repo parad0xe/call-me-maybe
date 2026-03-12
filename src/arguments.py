@@ -19,6 +19,7 @@ class Args(BaseModel):
     functions_definition_filepath: str
     input_filepath: str
     output_filepath: str
+    verbose: int
 
     @classmethod
     def parse_arguments(cls) -> Self:
@@ -47,11 +48,19 @@ class Args(BaseModel):
             type=str,
             default="data/output/function_calls.json",
         )
+        parser.add_argument(
+            "--verbose",
+            "-v",
+            action="count",
+            default=0,
+            help="increase output verbosity (e.g., -v, -vv, -vvv)",
+        )
         args = parser.parse_args()
         return cls(
             **{
                 "functions_definition_filepath": args.functions_definition,
                 "input_filepath": args.input,
                 "output_filepath": args.output,
+                "verbose": args.verbose,
             }
         )
