@@ -27,7 +27,9 @@ if not USERNAME:
         "or 'HOME' environment variables."
     )
 
-CACHE_DIR: str = f"/sgoinfre/{USERNAME}/.call-me-maybe.cache"
+CACHE_DIR: str | None = None
+if os.path.exists(f"/sgoinfre/{USERNAME}/"):
+    CACHE_DIR = f"/sgoinfre/{USERNAME}/.call-me-maybe.cache"
 
 
 class Small_LLM_Model:
