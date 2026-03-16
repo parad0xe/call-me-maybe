@@ -38,21 +38,40 @@ def main() -> None:
         logger.exception(e)
         exit(2)
 
-    print(definition)
-    print(inputs)
-    exit()
+    functions: list[str] = []
+    for d in definition:
+        functions.append(
+            f"(fn_name: '{d.get('name', '')}', desc: {d.get('description', '')})"
+        )
 
-    model = load_model()
+    for i in inputs:
+        prompt: str = i.get("prompt")
+        # output_fmt: str = (
+        #    "output format: json with key 'name' of function: str "
+        #    "and 'parameters' to pass: object"
+        # )
+        output_fmt: str = "{ fn_name: 'name of function' }, EOS"
+        choices: str = f"[{','.join(functions)}]"
+        model = load_model()
 
-    text = 'What is the sum of 2 and 3? output: {\n\t"parameters":'
-    for _ in range(20):
-        tensors = model.encode(text)
+        text = f"Prompt: {prompt}; Context: {choices}; Answer json format: {output_fmt}; Answer:"
 
-        logit = np.array(model.get_logits_from_input_ids(tensors[0].tolist()))
-        tokens = np.argsort(logit)[::-1]
+        for _ in range(35):
+            tensors = model.encode(text)
 
-        text = model.decode(tensors[0].tolist() + [tokens[0]])
-        print(text)
+            logit = np.array(
+                model.get_logits_from_input_ids(tensors[0].tolist())
+            )
+            tokens = np.argsort(logit)[::-1]
+
+            text = model.decode(tensors[0].tolist() + [tokens[0]])
+            print(text)
+            if text.endswith("EOS"):
+                break
+
+        fn_name = text.split("Answer:", 1)[1].split(",")[0].strip()
+
+        print(prompt, "::", fn_name)
 
 
 if __name__ == "__main__":
