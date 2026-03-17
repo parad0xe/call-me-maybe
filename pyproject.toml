@@ -7,6 +7,7 @@ dependencies = [
     "numpy>=2.2.6",
     "pydantic>=2.12.5",
     "llm_sdk",
+	"regex>=2026.2.28"
 ]
 
 [tool.uv.sources]
