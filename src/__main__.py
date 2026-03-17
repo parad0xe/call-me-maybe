@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -88,13 +89,13 @@ def generate_outputs(definitions: dict, inputs: dict) -> list[dict]:
         """
 
         answer = compute(model, text, fmt)
-        logger.debug("step 1 ::", answer)
+        logger.debug(f"step 1 :: {answer}")
 
         fn = json.loads(answer).get("function_name", "")
         definition = next(d for d in definitions if d["name"] == fn)
 
         params = {
-            "prompt": prompt.replace('"', "'"),
+            "prompt": re.escape(prompt),
             "name": fn,
             "parameters": {},
         }
@@ -116,7 +117,7 @@ def generate_outputs(definitions: dict, inputs: dict) -> list[dict]:
         out = json.loads(answer.replace("\\", "\\\\"))
         out["prompt"] = prompt
         outputs.append(out)
-        logger.debug("step 2 ::", outputs[-1])
+        logger.debug(f"step 2 :: {outputs[-1]}")
 
     return outputs
 
