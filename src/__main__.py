@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -34,14 +33,11 @@ def load_model() -> Small_LLM_Model:
 
 def compute(model: Small_LLM_Model, prompt: str, fmt: str) -> str:
     answer: str = ""
-    iterations: int = 0
     fullmatch: bool = False
     while not fullmatch:
-        iterations += 1
         tensors = model.encode(prompt)
 
         logit = np.array(model.get_logits_from_input_ids(tensors[0].tolist()))
-
         tokens = np.argsort(logit)[::-1]
 
         for token in tokens:
@@ -71,7 +67,7 @@ def generate_outputs(definitions: dict, inputs: dict) -> list[dict]:
 
     outputs: list[dict] = []
     for i in inputs:
-        prompt: str = i.get("prompt", "").lower()
+        prompt: str = i.get("prompt", "")
         model = load_model()
 
         fmt = f'{{"function_name": "({"|".join(fn_names)})"}}'
@@ -95,7 +91,7 @@ def generate_outputs(definitions: dict, inputs: dict) -> list[dict]:
         definition = next(d for d in definitions if d["name"] == fn)
 
         params = {
-            "prompt": re.escape(prompt),
+            "prompt": prompt.replace('"', "'"),
             "name": fn,
             "parameters": {},
         }
@@ -103,13 +99,14 @@ def generate_outputs(definitions: dict, inputs: dict) -> list[dict]:
             params["parameters"][name] = data.get("type", "")
 
         fmt = json.dumps(params)
-        fmt = fmt.replace('"string"', r"\"[^\"\\]*(?:\\.[^\"\\]*)*\"")
+        fmt = regex.escape(fmt, special_only=True, literal_spaces=True)
+        fmt = fmt.replace('"string"', r"\"[^\"\\]*\"")
         fmt = fmt.replace('"number"', r"\d+(\.\d*)?")
-        fmt = fmt.replace('"bool"', r"true|false")
+        fmt = fmt.replace('"bool"', r"(true|false)")
 
         text = """
         Prompt: {prompt}
-        Output: json
+        Output: json with constants strings.
         Answer:
         """
 
