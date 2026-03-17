@@ -1,5 +1,8 @@
 [
   {
+    "prompt": "validate 'greet shrek' (with no strict mode)"
+  },
+  {
     "prompt": "Reverse the string 'What is the sum of 2 and 3?'"
   },
   {
