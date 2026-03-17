@@ -12,7 +12,7 @@ from src.exceptions.json_engine.lexer import (
 WS: str = r"[\s\n\t\r]*"
 
 
-class TOKEN(Enum):
+class TOKEN(tuple, Enum):
     # ARR_OPEN = "ARR_OPEN"
     # ARR_CLOSE = "ARR_CLOSE"
     # OBJ_OPEN = "OBJ_OPEN"
@@ -27,19 +27,19 @@ class TOKEN(Enum):
     # COMMA = "COMMA"
     # COLON = "COLON"
 
-    ARR_OPEN = rf"{WS}([){WS}"
-    ARR_CLOSE = rf"{WS}(]){WS}"
-    OBJ_OPEN = rf"{WS}(\{{){WS}"
-    OBJ_CLOSE = rf"{WS}(\}}){WS}"
-    INTEGER = rf"{WS}(\d+){WS}"
-    FLOAT = rf"{WS}(\d+\.\d*){WS}"
-    BOOL = rf"{WS}(true|false){WS}"
-    NULL = rf"{WS}(null){WS}"
-    STRING_OPEN = rf"{WS}(\").*{WS}"
-    STRING_CLOSE = rf"{WS}.*(\"){WS}"
-    TEXT = rf"{WS}([^\"\\]*(?:\\.[^\"\\]*)*){WS}"
-    COMMA = rf"{WS}(,){WS}"
-    COLON = rf"{WS}(:){WS}"
+    ARR_OPEN = ("ARR_OPEN", rf"{WS}(\[){WS}")
+    ARR_CLOSE = ("ARR_CLOSE", rf"{WS}(]){WS}")
+    OBJ_OPEN = ("OBJ_OPEN", rf"{WS}(\{{){WS}")
+    OBJ_CLOSE = ("OBJ_CLOSE", rf"{WS}(\}}){WS}")
+    INTEGER = ("INTEGER", rf"{WS}(\d+){WS}")
+    FLOAT = ("FLOAT", rf"{WS}(\d+\.\d*){WS}")
+    BOOL = ("BOOL", rf"{WS}(true|false){WS}")
+    NULL = ("NULL", rf"{WS}(null){WS}")
+    STRING_OPEN = ("STRING_OPEN", rf"{WS}(\").*{WS}")
+    STRING_CLOSE = ("STRING_CLOSE", rf"{WS}.*(\"){WS}")
+    TEXT = ("TEXT", rf"{WS}([^\"\\]*(?:\\.[^\"\\]*)*){WS}")
+    COMMA = ("COMMA", rf"{WS}(,){WS}")
+    COLON = ("COLON", rf"{WS}(:){WS}")
 
 
 TOKEN_TYPE: TypeAlias = tuple[TOKEN, str | int | float | bool | None]

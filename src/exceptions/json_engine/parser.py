@@ -20,10 +20,12 @@ class ParserUnexpectedTokenError(ParserError):
     Error raised when the parser encounters a token it wasn't expecting.
     """
 
-    def __init__(self, expected: List[TOKEN], received: TOKEN | None) -> None:
+    def __init__(
+        self, expected: List[TOKEN], received: TOKEN | tuple[None, None]
+    ) -> None:
         expected_names = ", ".join([t.name for t in expected])
         super().__init__(
-            f"Unexpected token {received.name if received else 'None'}. "
+            f"Unexpected token {received[0] if received else 'None'}. "
             f"Expected one of: [{expected_names}]."
         )
 

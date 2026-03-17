@@ -1,3 +1,5 @@
+from typing import TypeAlias
+
 from pydantic import BaseModel
 
 from src.exceptions.json_engine.parser import ParserUnexpectedTokenError
@@ -13,32 +15,40 @@ VALUE: list[TOKEN] = [
     TOKEN.NULL,
 ]
 
+PREDICATES_TYPE: TypeAlias = list[tuple[str, str]]
+
 
 class JSONParser(BaseModel):
     tokens: TOKEN_LIST_TYPE
 
     @classmethod
-    def next(cls, tokens: TOKEN_LIST_TYPE) -> list[str]:
+    def next(cls, tokens: TOKEN_LIST_TYPE) -> PREDICATES_TYPE:
         return cls(tokens=tokens)._next()
 
-    def _eat(self) -> TOKEN_TYPE | tuple[None, None]:
+    @property
+    def _get_current_token(self) -> TOKEN | tuple[None, None]:
+        if not self.tokens:
+            return None, None
+        return self.tokens[0][0]
+
+    def _eat(self) -> TOKEN_TYPE | tuple[tuple[None, None], None]:
         if self.tokens:
             return self.tokens.popleft()
-        return None, None
+        return (None, None), None
 
     def _is(self, token: TOKEN) -> bool:
-        if self.tokens:
-            return self.tokens[0][0] == token
-        return False
+        return self._get_current_token == token
 
-    def _expected(self, expected: list[TOKEN]) -> list[str] | None:
-        if not self.tokens or self.tokens[0][0] not in expected:
+    def _expected(self, expected: list[TOKEN]) -> PREDICATES_TYPE | None:
+        if self._get_current_token not in expected:
             if self.tokens:
-                raise ParserUnexpectedTokenError(expected, self.tokens[0][0])
+                raise ParserUnexpectedTokenError(
+                    expected, self._get_current_token
+                )
             return [e.value for e in expected]
         return None
 
-    def _expected_eat(self, expected: TOKEN) -> list[str] | None:
+    def _expected_eat(self, expected: TOKEN) -> PREDICATES_TYPE | None:
         current_token, _ = self._eat()
         if current_token != expected:
             if self.tokens:
@@ -46,7 +56,7 @@ class JSONParser(BaseModel):
             return [expected.value]
         return None
 
-    def _next(self) -> list[str]:
+    def _next(self) -> PREDICATES_TYPE:
         if self._is(TOKEN.ARR_OPEN):
             return self._parse_array()
 
@@ -55,17 +65,17 @@ class JSONParser(BaseModel):
 
         return [TOKEN.ARR_OPEN.value, TOKEN.OBJ_OPEN.value]
 
-    def _parse_null(self) -> list[str]:
+    def _parse_null(self) -> PREDICATES_TYPE:
         if predicates := self._expected_eat(TOKEN.NULL):
             return predicates
         return []
 
-    def _parse_bool(self) -> list[str]:
+    def _parse_bool(self) -> PREDICATES_TYPE:
         if predicates := self._expected_eat(TOKEN.BOOL):
             return predicates
         return []
 
-    def _parse_array(self) -> list[str]:
+    def _parse_array(self) -> PREDICATES_TYPE:
         if predicates := self._expected_eat(TOKEN.ARR_OPEN):
             return predicates
 
@@ -90,7 +100,7 @@ class JSONParser(BaseModel):
 
         return []
 
-    def _parse_object(self) -> list[str]:
+    def _parse_object(self) -> PREDICATES_TYPE:
         if predicates := self._expected_eat(TOKEN.OBJ_OPEN):
             return predicates
 
@@ -129,13 +139,13 @@ class JSONParser(BaseModel):
 
         return []
 
-    def _parse_number(self) -> list[str]:
+    def _parse_number(self) -> PREDICATES_TYPE:
         if predicates := self._expected([TOKEN.INTEGER, TOKEN.FLOAT]):
             return predicates
         self._eat()
         return []
 
-    def _parse_string(self) -> list[str]:
+    def _parse_string(self) -> PREDICATES_TYPE:
         if predicates := self._expected_eat(TOKEN.STRING_OPEN):
             return predicates
 
@@ -150,11 +160,11 @@ class JSONParser(BaseModel):
 
         return []
 
-    def _parse_value(self) -> list[str]:
+    def _parse_value(self) -> PREDICATES_TYPE:
         if predicates := self._expected(VALUE):
             return predicates
 
-        match self.tokens[0][0]:
+        match self._get_current_token:
             case TOKEN.STRING_OPEN:
                 return self._parse_string()
             case TOKEN.FLOAT:
@@ -170,4 +180,4 @@ class JSONParser(BaseModel):
             case TOKEN.NULL:
                 return self._parse_null()
             case _:
-                return [v.value for v in VALUE]
+                return [v[1].value for v in VALUE]
