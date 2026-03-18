@@ -35,6 +35,8 @@ class LoaderError(AppError):
                 message = f"Failed to load file '{self.filepath}'."
             else:
                 message = self.default_message
+        elif self.filepath:
+            message = f"({self.filepath}) {message}"
 
         super().__init__(message)
 
