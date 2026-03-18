@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class CustomLLM(BaseModel):
+class ConstrainedLLMService(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     settings: Settings

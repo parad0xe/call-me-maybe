@@ -6,7 +6,7 @@ import sys
 from src.config.logging import LoggingSystem
 from src.config.settings import Settings
 from src.core.custom_types import OUTPUT_TYPE
-from src.core.llm import CustomLLM
+from src.core.llm import ConstrainedLLMService
 from src.exceptions.base import AppError
 from src.io.loader import load_definitions, load_prompts
 from src.io.writer import save_json
@@ -25,14 +25,14 @@ def main() -> None:
         definitions: list[Definition] = load_definitions(settings)
         prompts: list[Prompt] = load_prompts(settings)
 
-        llm = CustomLLM.create(settings, definitions)
+        service = ConstrainedLLMService.create(settings, definitions)
 
         outputs: list[OUTPUT_TYPE] = []
         for prompt in prompts:
             print()
             logger.info(f"Process: <{prompt}>")
-            definition = llm.identify_function(prompt)
-            output = llm.generate_function_call(prompt, definition)
+            definition = service.identify_function(prompt)
+            output = service.generate_function_call(prompt, definition)
             outputs.append(output)
 
         save_json(settings, outputs)
