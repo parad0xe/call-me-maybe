@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing_extensions import Self
 
 
-class Args(BaseModel):
+class Settings(BaseModel):
     """
     Validated container for command-line arguments.
 

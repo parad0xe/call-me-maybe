@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import logging.config
 
-from src.arguments import Args
+from src.config.settings import Settings
 
 
 class LoggingSystem:
@@ -44,7 +44,7 @@ class LoggingSystem:
     @classmethod
     def configure(
         cls: type[LoggingSystem],
-        args: Args,
+        settings: Settings,
     ) -> None:
         """
         Configures the logging environment based on verbosity level.
@@ -52,7 +52,7 @@ class LoggingSystem:
         Args:
             args: Command-line arguments containing the verbose count.
         """
-        level: int = cls._get_level(args.verbose)
+        level: int = cls._get_level(settings.verbose)
 
         logging.config.dictConfig(LoggingSystem.CONFIG)
 

@@ -10,6 +10,7 @@ import regex
 from pydantic import BaseModel, ConfigDict, SkipValidation
 from typing_extensions import Self
 
+from src.config.settings import Settings
 from src.exceptions.base import AppError
 from src.models.definition import Definition
 from src.models.prompt import Prompt
@@ -19,22 +20,20 @@ if TYPE_CHECKING:
 
 import numpy as np
 
-from src.arguments import Args
-
 logger = logging.getLogger(__name__)
 
 
 class CustomLLM(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    args: Args
+    settings: Settings
     model: Annotated[Small_LLM_Model, SkipValidation]
     available_functions: list[str]
     formatted_functions: list[str]
     definitions: list[Definition]
 
     @classmethod
-    def load(cls, args: Args, definitions: list[Definition]) -> Self:
+    def load(cls, settings: Args, definitions: list[Definition]) -> Self:
         logger.info("Loading model..")
         from llm_sdk import Small_LLM_Model
 
@@ -52,7 +51,7 @@ class CustomLLM(BaseModel):
         logger.info("Model loaded.")
         return cls.model_construct(
             model=model,
-            args=args,
+            settings=settings,
             available_functions=fn_names,
             formatted_functions=functions,
             definitions=definitions,

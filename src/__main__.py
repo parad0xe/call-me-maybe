@@ -3,11 +3,12 @@ from __future__ import annotations
 import logging
 import sys
 
-from src.arguments import Args
+from src.config.logging import LoggingSystem
+from src.config.settings import Settings
+from src.core.llm import CustomLLM
 from src.exceptions.base import AppError
-from src.io.loader import load_definitions, load_prompts, save_outputs
-from src.llm import CustomLLM
-from src.logging import LoggingSystem
+from src.io.reader import load_definitions, load_prompts
+from src.io.writer import save_json
 from src.models.definition import Definition
 from src.models.prompt import Prompt
 
@@ -15,15 +16,15 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    args = Args.from_cli()
+    settings = Settings.from_cli()
 
-    LoggingSystem.configure(args)
+    LoggingSystem.configure(settings)
 
     try:
-        definitions: list[Definition] = load_definitions(args)
-        prompts: list[Prompt] = load_prompts(args)
+        definitions: list[Definition] = load_definitions(settings)
+        prompts: list[Prompt] = load_prompts(settings)
 
-        llm = CustomLLM.load(args, definitions)
+        llm = CustomLLM.load(settings, definitions)
 
         outputs: list[dict] = []
         for prompt in prompts:
@@ -33,7 +34,7 @@ def main() -> None:
             output = llm.generate_function_call(prompt, definition)
             outputs.append(output)
 
-        save_outputs(args, outputs)
+        save_json(settings, outputs)
     except AppError as e:
         logger.exception(e)
         sys.exit(1)
