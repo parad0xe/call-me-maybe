@@ -24,3 +24,7 @@ dev = [
     "flake8>=7.3.0",
     "mypy>=1.19.1",
 ]
+
+[[tool.mypy.overrides]]
+module = "regex.*"
+ignore_missing_imports = true

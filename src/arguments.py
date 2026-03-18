@@ -22,7 +22,7 @@ class Args(BaseModel):
     verbose: int
 
     @classmethod
-    def parse_arguments(cls) -> Self:
+    def from_cli(cls) -> Self:
         """
         Parse CLI flags and return a validated Args instance.
 

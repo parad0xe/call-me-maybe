@@ -42,7 +42,7 @@ class LoggingSystem:
     }
 
     @classmethod
-    def global_setup(
+    def configure(
         cls: type[LoggingSystem],
         args: Args,
     ) -> None:
