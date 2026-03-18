@@ -5,8 +5,8 @@ import sys
 
 from src.config.logging import LoggingSystem
 from src.config.settings import Settings
+from src.core.custom_types import OUTPUT_TYPE
 from src.core.llm import CustomLLM
-from src.core.types import OUTPUT_TYPE
 from src.exceptions.base import AppError
 from src.io.loader import load_definitions, load_prompts
 from src.io.writer import save_json

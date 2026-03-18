@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 
 from src.config.settings import Settings
-from src.core.types import OUTPUT_TYPE
+from src.core.custom_types import OUTPUT_TYPE
 from src.exceptions.loader import (
     LoaderError,
     LoaderFileNotFoundError,

@@ -13,7 +13,7 @@ from src.core.constraints import (
     build_constrained_function_call_from_definition,
     infer_constrained_answer,
 )
-from src.core.types import OUTPUT_TYPE
+from src.core.custom_types import OUTPUT_TYPE
 from src.exceptions.base import AppError
 from src.models.definition import Definition
 from src.models.prompt import Prompt
