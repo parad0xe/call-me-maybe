@@ -6,8 +6,9 @@ import sys
 from src.config.logging import LoggingSystem
 from src.config.settings import Settings
 from src.core.llm import CustomLLM
+from src.core.types import OUTPUT_TYPE
 from src.exceptions.base import AppError
-from src.io.reader import load_definitions, load_prompts
+from src.io.loader import load_definitions, load_prompts
 from src.io.writer import save_json
 from src.models.definition import Definition
 from src.models.prompt import Prompt
@@ -24,9 +25,9 @@ def main() -> None:
         definitions: list[Definition] = load_definitions(settings)
         prompts: list[Prompt] = load_prompts(settings)
 
-        llm = CustomLLM.load(settings, definitions)
+        llm = CustomLLM.create(settings, definitions)
 
-        outputs: list[dict] = []
+        outputs: list[OUTPUT_TYPE] = []
         for prompt in prompts:
             print()
             logger.info(f"Process: <{prompt}>")

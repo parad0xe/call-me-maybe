@@ -3,6 +3,7 @@ import logging
 from pathlib import Path
 
 from src.config.settings import Settings
+from src.core.types import OUTPUT_TYPE
 from src.exceptions.loader import (
     LoaderError,
     LoaderFileNotFoundError,
@@ -12,7 +13,7 @@ from src.exceptions.loader import (
 logger = logging.getLogger(__name__)
 
 
-def save_json(settings: Settings, outputs: list[dict]) -> None:
+def save_json(settings: Settings, outputs: list[OUTPUT_TYPE]) -> None:
     try:
         output_path = Path(settings.output_filepath)
         output_path.parent.mkdir(parents=True, exist_ok=True)

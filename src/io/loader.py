@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -46,7 +47,7 @@ def load_prompts(settings: Settings) -> list[Prompt]:
     return output
 
 
-def load_json_list(filepath: str) -> list[dict]:
+def load_json_list(filepath: str) -> list[dict[str, Any]]:
     try:
         with open(filepath, "r") as f:
             content = f.read()

@@ -3,22 +3,23 @@ from __future__ import annotations
 import json
 import logging
 import textwrap
-import time
 from typing import TYPE_CHECKING, Annotated
 
-import regex
 from pydantic import BaseModel, ConfigDict, SkipValidation
 from typing_extensions import Self
 
 from src.config.settings import Settings
+from src.core.constraints import (
+    build_constrained_function_call_from_definition,
+    infer_constrained_answer,
+)
+from src.core.types import OUTPUT_TYPE
 from src.exceptions.base import AppError
 from src.models.definition import Definition
 from src.models.prompt import Prompt
 
 if TYPE_CHECKING:
     from llm_sdk import Small_LLM_Model
-
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +34,12 @@ class CustomLLM(BaseModel):
     definitions: list[Definition]
 
     @classmethod
-    def load(cls, settings: Args, definitions: list[Definition]) -> Self:
-        logger.info("Loading model..")
+    def create(
+        cls,
+        settings: Settings,
+        definitions: list[Definition],
+    ) -> Self:
+        logger.info("Load model..")
         from llm_sdk import Small_LLM_Model
 
         model: Small_LLM_Model = Small_LLM_Model()
@@ -76,7 +81,11 @@ class CustomLLM(BaseModel):
         """
         )
 
-        answer = self._generate_constrained_answer(self.model, text, fmt)
+        answer = infer_constrained_answer(
+            model=self.model,
+            prompt=text,
+            fmt=fmt,
+        )
 
         function_name = json.loads(answer).get("function_name", "")
         definition = next(
@@ -90,80 +99,31 @@ class CustomLLM(BaseModel):
         return definition
 
     def generate_function_call(
-        self, prompt: Prompt, definition: Definition
-    ) -> dict:
-        params: dict = {
-            "prompt": prompt.prompt.replace('"', "'"),
-            "name": definition.name,
-            "parameters": {},
-        }
+        self,
+        prompt: Prompt,
+        definition: Definition,
+    ) -> OUTPUT_TYPE:
 
-        timestamps = time.time_ns()
-        KEY_STRING = f"___JSON_TYPE_STRING__{timestamps}___"
-        KEY_NUMBER = f"___JSON_TYPE_NUMBER__{timestamps}___"
-        KEY_BOOL = f"___JSON_TYPE_BOOL__{timestamps}___"
+        fmt = build_constrained_function_call_from_definition(
+            prompt, definition
+        )
 
-        for name, data in definition.parameters.items():
-            match data.type:
-                case "string":
-                    params["parameters"][name] = KEY_STRING
-                case "number":
-                    params["parameters"][name] = KEY_NUMBER
-                case "bool":
-                    params["parameters"][name] = KEY_BOOL
-                case _:
-                    params["parameters"][name] = KEY_STRING
-
-        fmt = json.dumps(params)
-        fmt = regex.escape(fmt, special_only=True, literal_spaces=True)
-        fmt = fmt.replace(f'"{KEY_STRING}"', r"\"[^\"\\]*\"")
-        fmt = fmt.replace(f'"{KEY_NUMBER}"', r"\d+(\.\d*)?")
-        fmt = fmt.replace(f'"{KEY_BOOL}"', r"(true|false)")
-
-        text = """
-        Prompt: {prompt}
-        Output: json with constants strings.
+        text = textwrap.dedent(
+            f"""
+        Prompt: {prompt.prompt}
+        Output: json with constants strings and simple regex.
         Answer:
         """
+        )
 
-        answer = self._generate_constrained_answer(self.model, text, fmt)
-        out = json.loads(answer.replace("\\", "\\\\"))
-        out["prompt"] = prompt.prompt
-        logger.info(f"output :: {out}")
+        answer = infer_constrained_answer(
+            model=self.model,
+            prompt=text,
+            fmt=fmt,
+        )
 
-        return out
+        output: OUTPUT_TYPE = json.loads(answer.replace("\\", "\\\\"))
+        output["prompt"] = prompt.prompt
+        logger.info(f"output :: {output}")
 
-    def _generate_constrained_answer(
-        self,
-        model: Small_LLM_Model,
-        prompt: str,
-        fmt: str,
-    ) -> str:
-        answer: str = ""
-        fullmatch: bool = False
-        while not fullmatch:
-            tensors = model.encode(prompt)
-
-            logit = np.array(
-                model.get_logits_from_input_ids(tensors[0].tolist())
-            )
-
-            tokens = np.argsort(logit)[::-1]
-
-            token_found: bool = False
-            for token in tokens:
-                value = model.decode([token])
-                if value == "":
-                    continue
-                if match := regex.fullmatch(fmt, answer + value, partial=True):
-                    prompt += value
-                    answer += value
-                    token_found = True
-                    logger.debug(answer)
-                    if not match.partial:
-                        fullmatch = True
-                    break
-            if not token_found:
-                # TODO: Custom exception
-                raise AppError("No token found")
-        return answer
+        return output
