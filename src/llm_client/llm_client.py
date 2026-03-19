@@ -178,6 +178,7 @@ class LLMClient(BaseModel):
         text = textwrap.dedent(
             f"""
         Prompt: {prompt.prompt}
+        Description: {definition.description}
         Output: json with literal strings, complex numbers (float priority) \
                 and simple regex.
         Answer:
