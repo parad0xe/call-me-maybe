@@ -67,7 +67,10 @@ def build_function_call_pattern(
     fmt = json.dumps(params)
     fmt = regex.escape(fmt, special_only=True, literal_spaces=True)
     fmt = fmt.replace(f'"{KEY_STRING}"', r"\"[^\"\\]*\"")
-    fmt = fmt.replace(f'"{KEY_NUMBER}"', r"-?\d+(\.\d*)?")
+    fmt = fmt.replace(
+        f'"{KEY_NUMBER}"',
+        r"[+-]?(\d{1,15}(\.\d{0,15})?|\.\d{1,15})([eE][+-]?\d{1,15})?",
+    )
     fmt = fmt.replace(f'"{KEY_BOOL}"', r"(true|false)")
 
     return fmt
