@@ -1,5 +1,11 @@
 [
   {
+    "prompt": ""
+  },
+  {
+    "prompt": "Qu'elle temps fait t'il?"
+  },
+  {
     "prompt": "validate 'greet shrek' (with no strict mode)"
   },
   {
