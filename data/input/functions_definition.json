@@ -30,6 +30,15 @@
     }
   },
   {
+    "name": "fn_get_weather",
+    "description": "Get the current temperature in a city. (Celsius or Fahrenheit)",
+    "parameters": {
+      "city": { "type": "string" },
+      "units": { "type": "string" }
+    },
+    "returns": { "type": "string" }
+  },
+  {
     "name": "fn_now",
     "description": "Get current time.",
     "parameters": {},

@@ -5,6 +5,7 @@
   {
     "prompt": "Qu'elle temps fait t'il?"
   },
+  { "prompt": "What is the weather in Paris?" },
   {
     "prompt": "What time is it?"
   },
