@@ -55,9 +55,17 @@ def infer_constrained_answer(
                     fullmatch = True
                 break
         if not token_found:
+            logger.warning(
+                "No valid token found matching constraints. Partial: <%s>",
+                answer,
+            )
             return None
 
     if not fullmatch:
+        logger.warning(
+            "Inference timed out before full match after %dms.",
+            20000,
+        )
         return None
 
     return answer
