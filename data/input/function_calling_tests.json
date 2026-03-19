@@ -6,13 +6,16 @@
     "prompt": "Qu'elle temps fait t'il?"
   },
   {
+    "prompt": "What time is it?"
+  },
+  {
     "prompt": "validate 'greet shrek' (with no strict mode)"
   },
   {
     "prompt": "Reverse the string 'What is the sum of 2 and 3?'"
   },
   {
-    "prompt": "What is the sum of 2 and 3?"
+    "prompt": "What is the sum of 2e-5 and 3e8?"
   },
   {
     "prompt": "What is the sum of 265 and 345?"
