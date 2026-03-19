@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 import sys
 
+from tqdm import tqdm
+
 from src.config.logging import LoggingSystem
 from src.config.settings import Settings
 from src.exceptions.base import AppError
@@ -32,17 +34,20 @@ def skip_or_exit(settings: Settings, message: str) -> None:
 
 def main() -> None:
     settings = Settings.from_cli()
-
     LoggingSystem.configure(settings)
 
     try:
         definitions: list[Definition] = load_definitions(settings)
         prompts: list[Prompt] = load_prompts(settings)
-
         client = LLMClient.create(settings, definitions)
-
         calls: list[FunctionCall] = []
-        for prompt in prompts:
+
+        for prompt in tqdm(
+                prompts,
+                desc="Processing",
+                unit="prompt",
+                disable=settings.verbose > 0,
+        ):
             if settings.verbose > 0:
                 print()
 
