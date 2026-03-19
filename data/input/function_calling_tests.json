@@ -9,6 +9,9 @@
     "prompt": "What time is it?"
   },
   {
+    "prompt": "Qu'est la somme de un + deux ?"
+  },
+  {
     "prompt": "validate 'greet shrek' (with no strict mode)"
   },
   {
