@@ -133,6 +133,7 @@ class LLMClient(BaseModel):
             model=self.model,
             prompt=text,
             fmt=fmt,
+            timeout=self.settings.timeout,
         )
 
         if answer is None:
@@ -187,6 +188,7 @@ class LLMClient(BaseModel):
             model=self.model,
             prompt=text,
             fmt=fmt,
+            timeout=self.settings.timeout,
         )
 
         if answer is None:

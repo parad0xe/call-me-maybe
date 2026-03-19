@@ -16,9 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def infer_constrained_answer(
-    model: Small_LLM_Model,
-    prompt: str,
-    fmt: str,
+    model: Small_LLM_Model, prompt: str, fmt: str, timeout: int = 20000
 ) -> str | None:
     """
     Infers an answer from a language model using a regex constraint.
@@ -36,7 +34,7 @@ def infer_constrained_answer(
     fullmatch: bool = False
     elapsed = start_ms_timer()
 
-    while not fullmatch and elapsed() < 20000:
+    while not fullmatch and elapsed() < timeout:
         tensors = model.encode(prompt)
         logit = np.array(model.get_logits_from_input_ids(tensors[0].tolist()))
         tokens = np.argsort(logit)[::-1]
@@ -64,7 +62,7 @@ def infer_constrained_answer(
     if not fullmatch:
         logger.warning(
             "Inference timed out before full match after %dms.",
-            20000,
+            timeout,
         )
         return None
 
