@@ -27,9 +27,10 @@ def skip_or_exit(settings: Settings, message: str) -> None:
         message: Warning message to log before skipping or exiting.
     """
     message += " (skipped)" if not settings.stop_on_first_error else ""
-    logger.warning(message)
     if settings.stop_on_first_error:
+        logger.error(message)
         sys.exit(4)
+    logger.warning(message)
 
 
 def main() -> None:
