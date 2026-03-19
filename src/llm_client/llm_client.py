@@ -112,14 +112,12 @@ class LLMClient(BaseModel):
         """
 
         functions = "\n\t".join(self.formatted_functions)
-        formatted_prompt = prompt.prompt.replace('"', "'")
-
         fmt = build_function_name_pattern(self.available_functions)
 
         text = textwrap.dedent(
             f"""
         User Prompt:
-        "{formatted_prompt}"
+        {prompt.prompt}
 
         Function List (use description):
         {functions}
@@ -179,7 +177,8 @@ class LLMClient(BaseModel):
         text = textwrap.dedent(
             f"""
         Prompt: {prompt.prompt}
-        Output: json with constants strings and simple regex.
+        Output: json with literal strings, complex numbers (float priority) \
+                and simple regex.
         Answer:
         """
         )
