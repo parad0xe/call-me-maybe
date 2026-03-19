@@ -1,20 +1,18 @@
 from typing import Optional, Union
 
-from pydantic import ValidationError
-
 from src.exceptions.base import AppError
 
 
-class LoaderError(AppError):
+class StorageError(AppError):
     """
-    Base class for all errors related to load files.
+    Base class for all errors related to file operations (read/write).
 
     Attributes:
         default_message: Fallback message used when no message is provided.
         filepath: The path to the file that caused the error, if applicable.
     """
 
-    default_message = "Failed to load file."
+    default_message = "A file operation failed."
 
     def __init__(
         self,
@@ -31,17 +29,17 @@ class LoaderError(AppError):
         self.filepath = filepath
 
         if message is None:
-            if self.filepath:
-                message = f"Failed to load file '{self.filepath}'."
-            else:
-                message = self.default_message
+            message = (
+                f"Failed to access or process file '{filepath}'."
+                if filepath else self.default_message
+            )
         elif self.filepath:
             message = f"({self.filepath}) {message}"
 
         super().__init__(message)
 
 
-class LoaderFileNotFoundError(LoaderError):
+class StorageFileNotFoundError(StorageError):
     """
     Error raised when the target file does not exist on the filesystem.
     """
@@ -53,10 +51,8 @@ class LoaderFileNotFoundError(LoaderError):
         )
 
 
-class LoaderFilePermissionError(LoaderError):
-    """
-    Error raised when the application lacks permissions to access the file.
-    """
+class StorageFilePermissionError(StorageError):
+    """Error raised when lacking permissions to read or write the file."""
 
     def __init__(self, filepath: str) -> None:
         super().__init__(
@@ -65,41 +61,13 @@ class LoaderFilePermissionError(LoaderError):
         )
 
 
-class LoaderEmptyFileError(LoaderError):
+class StorageEmptyFileError(StorageError):
     """
-    Error raised when the provided file contains no data to load.
+    Error raised when the provided file contains no data.
     """
 
     def __init__(self, filepath: str) -> None:
         super().__init__(
             f"The specified file '{filepath}' is empty.",
-            filepath=filepath,
-        )
-
-
-class LoaderValidationError(LoaderError):
-    """Error raised when configuration data fails validation checks."""
-
-    def __init__(self, e: ValidationError, filepath: str) -> None:
-        """
-        Initializes the validation error with formatted messages.
-
-        Args:
-            e: The Pydantic validation error.
-            filepath: Path to the invalid file.
-        """
-        messages: list[str] = []
-
-        messages.append("")
-        for error in e.errors():
-            location = (
-                " -> ".join(str(loc) for loc in error["loc"])
-                if error["loc"] else "model"
-            )
-
-            messages.append(f"- ({location}) {error['msg']}")
-
-        super().__init__(
-            "\n".join(messages),
             filepath=filepath,
         )

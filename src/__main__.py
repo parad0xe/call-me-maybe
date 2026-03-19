@@ -5,15 +5,29 @@ import sys
 
 from src.config.logging import LoggingSystem
 from src.config.settings import Settings
-from src.core.custom_types import OUTPUT_TYPE
-from src.core.llm import ConstrainedLLMService
 from src.exceptions.base import AppError
-from src.io.loader import load_definitions, load_prompts
-from src.io.writer import save_json
+from src.llm_client.llm_client import LLMClient
 from src.models.definition import Definition
+from src.models.function_call import FunctionCall
 from src.models.prompt import Prompt
+from src.storage.loader import load_definitions, load_prompts
+from src.storage.writer import save_generated_calls
 
 logger = logging.getLogger(__name__)
+
+
+def skip_or_exit(settings: Settings, message: str) -> None:
+    """
+    Logs a warning and optionally exits the program on error.
+
+    Args:
+        settings: Application configuration settings.
+        message: Warning message to log before skipping or exiting.
+    """
+    message += " (skipped)" if not settings.stop_on_first_error else ""
+    logger.warning(message)
+    if settings.stop_on_first_error:
+        sys.exit(4)
 
 
 def main() -> None:
@@ -25,17 +39,34 @@ def main() -> None:
         definitions: list[Definition] = load_definitions(settings)
         prompts: list[Prompt] = load_prompts(settings)
 
-        service = ConstrainedLLMService.create(settings, definitions)
+        client = LLMClient.create(settings, definitions)
 
-        outputs: list[OUTPUT_TYPE] = []
+        calls: list[FunctionCall] = []
         for prompt in prompts:
-            print()
-            logger.info(f"Process: <{prompt}>")
-            definition = service.identify_function(prompt)
-            output = service.generate_function_call(prompt, definition)
-            outputs.append(output)
+            if settings.verbose > 0:
+                print()
 
-        save_json(settings, outputs)
+            logger.info("Processing prompt: <%s>", prompt)
+
+            if not prompt.prompt:
+                skip_or_exit(settings, "Prompt is empty")
+                continue
+
+            definition = client.identify_definition(prompt)
+            if definition is None:
+                skip_or_exit(
+                    settings, "Function definition could not be identified"
+                )
+                continue
+
+            call = client.generate_function_call(prompt, definition)
+            if call is None:
+                skip_or_exit(settings, "Function call could not be generated")
+                continue
+
+            calls.append(call)
+
+        save_generated_calls(settings, calls)
     except AppError as e:
         logger.exception(e)
         sys.exit(1)
