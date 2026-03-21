@@ -99,3 +99,17 @@ class SchemaInvalidJSONRootError(SchemaError):
             message += f" of '{context}'"
 
         super().__init__(f"{message}.")
+
+
+class SchemaConstraintArgumentError(SchemaError):
+    """Error raised when an argument is missing for a Constraint token."""
+
+    def __init__(self, token_name: str) -> None:
+        """
+        Initializes the error for a missing Constraint argument.
+
+        Args:
+            token_name: The name of the missing argument token.
+        """
+        super(
+        ).__init__(f"Missing argument '{token_name}' in Constraint args.")
