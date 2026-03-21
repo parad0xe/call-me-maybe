@@ -1,7 +1,9 @@
-from typing import Generator
+from typing import Generator, TypeVar
+
+T = TypeVar("T")
 
 
-def chunks(array: list, chunk_size: int) -> Generator[list, None, None]:
+def chunks(array: list[T], chunk_size: int) -> Generator[list[T], None, None]:
     """
     Yields successive n-sized chunks from a list.
 

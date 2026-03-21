@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import ValidationError
 
 from src.exceptions.base import AppError
@@ -83,7 +85,7 @@ class SchemaInvalidJSONRootError(SchemaError):
 
     def __init__(
         self,
-        expected: type[list | dict],
+        expected: type[list[Any] | dict[Any, Any]],
         context: str | None = None,
     ) -> None:
         """

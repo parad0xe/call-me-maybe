@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import time
 from types import TracebackType
-from typing import Any
+from typing import Any, cast
 
 import regex
 from pydantic import BaseModel, PrivateAttr
@@ -22,7 +22,6 @@ class Constraint(BaseModel):
     to generate constrained formatting patterns for LLM outputs.
     """
 
-    _identifier: int = PrivateAttr(default_factory=time.time_ns)
     _registry: dict[str, tuple[bool, str]] = PrivateAttr(default_factory=dict)
 
     def build(self, fmt: str, args: dict[str, str] | None = None) -> str:
@@ -104,7 +103,7 @@ class Constraint(BaseModel):
             include_quote=False,
         )
 
-    def string(self, include_extra_quote: bool = True) -> str:
+    def string_regex(self, include_extra_quote: bool = True) -> str:
         """
         Registers a regex pattern for parsing a JSON string.
 
@@ -122,7 +121,7 @@ class Constraint(BaseModel):
             include_quote=include_extra_quote,
         )
 
-    def number(self, include_extra_quote: bool = True) -> str:
+    def number_regex(self, include_extra_quote: bool = True) -> str:
         """
         Registers a regex pattern for parsing a JSON number.
 
@@ -140,7 +139,7 @@ class Constraint(BaseModel):
             include_quote=include_extra_quote,
         )
 
-    def bool(self, include_extra_quote: bool = True) -> str:
+    def bool_regex(self, include_extra_quote: bool = True) -> str:
         """
         Registers a regex pattern for parsing a JSON boolean.
 
@@ -169,7 +168,9 @@ class Constraint(BaseModel):
             The safely escaped string.
         """
 
-        return regex.escape(value, special_only=True, literal_spaces=True)
+        return cast(
+            str, regex.escape(value, special_only=True, literal_spaces=True)
+        )
 
     def _register(
         self,
@@ -274,10 +275,10 @@ def build_function_call_pattern(
         for name, data in definition.parameters.items():
             match data.type:
                 case "number":
-                    params["parameters"][name] = cst.number()
+                    params["parameters"][name] = cst.number_regex()
                 case "bool":
-                    params["parameters"][name] = cst.bool()
+                    params["parameters"][name] = cst.bool_regex()
                 case "string" | _:
-                    params["parameters"][name] = cst.string()
+                    params["parameters"][name] = cst.string_regex()
 
         return cst.build_json(params)
