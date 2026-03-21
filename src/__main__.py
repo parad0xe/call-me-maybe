@@ -58,7 +58,12 @@ def main() -> None:
                 skip_or_exit(settings, "Prompt is empty")
                 continue
 
-            definition = client.identify_definition(prompt)
+            intent = client.identify_intent(prompt)
+            if intent is None:
+                skip_or_exit(settings, "Intent could not be identified")
+                continue
+
+            definition = client.identify_definition(prompt, intent)
             if definition is None:
                 skip_or_exit(
                     settings, "Function definition could not be identified"

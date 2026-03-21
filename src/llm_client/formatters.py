@@ -2,30 +2,251 @@ from __future__ import annotations
 
 import json
 import time
+from types import TracebackType
 from typing import Any
 
 import regex
+from pydantic import BaseModel, PrivateAttr
+from typing_extensions import Self
 
+from src.exceptions.schema import SchemaConstraintArgumentError
 from src.models.definition import Definition
 from src.models.prompt import Prompt
 
 
-def build_function_name_pattern(functions: list[str]) -> str:
+class Constraint(BaseModel):
+    """
+    Context manager for building regex patterns.
+
+    This class handles the registration and safe replacement of tokens
+    to generate constrained formatting patterns for LLM outputs.
+    """
+
+    _identifier: int = PrivateAttr(default_factory=time.time_ns)
+    _registry: dict[str, tuple[bool, str]] = PrivateAttr(default_factory=dict)
+
+    def build(self, fmt: str, args: dict[str, str] | None = None) -> str:
+        """
+        Replaces registered tokens in the format string with their values.
+
+        Args:
+            fmt: The format string containing tokens to replace.
+            args: Dictionary mapping custom token names to their values.
+
+        Returns:
+            The final regex pattern string.
+
+        Raises:
+            SchemaConstraintArgumentError: If a required argument is missing.
+        """
+
+        args = args or {}
+
+        required = {
+            value
+            for _, (is_internal_arg, value) in self._registry.items()
+            if not is_internal_arg
+        }
+
+        if missing_args := required - args.keys():
+            self._registry.clear()
+            raise SchemaConstraintArgumentError(missing_args.pop())
+
+        replacements: dict[str, str] = {
+            token: args[self.safe_literal(value)]
+            if not is_internal_arg
+            else value
+            for token, (is_internal_arg, value) in self._registry.items()
+        }
+        self._registry.clear()
+
+        fmt = self.safe_literal(fmt)
+        for token, value in replacements.items():
+            fmt = fmt.replace(self.safe_literal(token), value)
+
+        return fmt
+
+    def build_json(
+        self,
+        data: dict[str, Any],
+        args: dict[str, str] | None = None,
+    ) -> str:
+        """
+        Serializes a dictionary to JSON and applies the build replacements.
+
+        Args:
+            data: The dictionary to format and build from.
+            args: Dictionary mapping custom token names to their values.
+
+        Returns:
+            The final regex pattern string representing the JSON.
+        """
+
+        fmt = json.dumps(data)
+        return self.build(fmt, args)
+
+    def token(self, name: str) -> str:
+        """
+        Registers a placeholder for a custom user-defined token.
+
+        Args:
+            name: The name identifying this token.
+
+        Returns:
+            The generated placeholder string to use in the template.
+        """
+
+        name = self.safe_literal(name)
+        return self._register(
+            f"TOKEN_{name}",
+            name,
+            is_internal_arg=False,
+            include_quote=False,
+        )
+
+    def string(self, include_extra_quote: bool = True) -> str:
+        """
+        Registers a regex pattern for parsing a JSON string.
+
+        Args:
+            include_extra_quote: Whether to expect surrounding quotes.
+
+        Returns:
+            The generated placeholder string to use in the template.
+        """
+
+        return self._register(
+            "STRING",
+            r'"([^"\\]*)"',
+            is_internal_arg=True,
+            include_quote=include_extra_quote,
+        )
+
+    def number(self, include_extra_quote: bool = True) -> str:
+        """
+        Registers a regex pattern for parsing a JSON number.
+
+        Args:
+            include_extra_quote: Whether to expect surrounding quotes.
+
+        Returns:
+            The generated placeholder string to use in the template.
+        """
+
+        return self._register(
+            "NUMBER",
+            r"[+-]?(\d{1,15}(\.\d{0,15})?|\.\d{1,15})([eE][+-]?\d{1,15})?",
+            is_internal_arg=True,
+            include_quote=include_extra_quote,
+        )
+
+    def bool(self, include_extra_quote: bool = True) -> str:
+        """
+        Registers a regex pattern for parsing a JSON boolean.
+
+        Args:
+            include_extra_quote: Whether to expect surrounding quotes.
+
+        Returns:
+            The generated placeholder string to use in the template.
+        """
+
+        return self._register(
+            "BOOL",
+            r"(true|false)",
+            is_internal_arg=True,
+            include_quote=include_extra_quote,
+        )
+
+    def safe_literal(self, value: str) -> str:
+        """
+        Safely escapes regex special characters within a given string.
+
+        Args:
+            value: The raw string to escape.
+
+        Returns:
+            The safely escaped string.
+        """
+
+        return regex.escape(value, special_only=True, literal_spaces=True)
+
+    def _register(
+        self,
+        prefix: str,
+        value: str,
+        is_internal_arg: bool = False,
+        include_quote: bool = False,
+    ) -> str:
+        """
+        Internal method to store a replacement target in the registry.
+
+        Args:
+            prefix: An identifier prefix for the specific token type.
+            value: The regex pattern or argument name to inject.
+            is_internal_arg: True if 'value' is an internal regex.
+            include_quote: True if the target must include surrounding
+                double quotes.
+
+        Returns:
+            The raw token string placeholder.
+        """
+
+        token: str = f"___JSON_TYPE_{prefix}_{time.time_ns()}__"
+        target = f'"{token}"' if include_quote else token
+
+        if target not in self._registry:
+            self._registry[target] = (is_internal_arg, value)
+
+        return token
+
+    def __enter__(self) -> Self:
+        """
+        Enters the context manager and returns the Constraint instance.
+
+        Returns:
+            The current instance of the Constraint builder.
+        """
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        """
+        Exits the context manager and cleans up the internal registry.
+
+        Args:
+            exc_type: The type of the exception raised, if any.
+            exc_val: The instance of the exception raised, if any.
+            exc_tb: The traceback of the exception raised, if any.
+        """
+        self._registry.clear()
+
+
+def build_function_name_pattern(prompt: Prompt, functions: list[str]) -> str:
     """
     Generates a regex pattern to enforce a JSON function name.
 
     Args:
-        functions: List of available function names.
+        prompt: User input prompt object.
+        functions: List of available function names to match against.
 
     Returns:
         JSON string containing the regex pattern for the function name.
     """
-    functions = [
-        regex.escape(f, special_only=True, literal_spaces=True)
-        for f in functions
-    ]
-    function_name_pattern: str = rf"({'|'.join(functions)})"
-    return f'{{"function_name": "{function_name_pattern}"}}'
+
+    with Constraint() as cst:
+        safe_functions = [cst.safe_literal(f) for f in functions]
+        fmt = {
+            "prompt": prompt.prompt,
+            "api_function": cst.token("functions"),
+        }
+        return cst.build_json(
+            fmt, {"functions": rf"({'|'.join(safe_functions)})"}
+        )
 
 
 def build_function_call_pattern(
@@ -36,41 +257,27 @@ def build_function_call_pattern(
     Generates a regex pattern to enforce a JSON function call.
 
     Args:
-        prompt: User input prompt.
-        definition: Function definition to enforce.
+        prompt: User input prompt object.
+        definition: Function definition to enforce and format.
 
     Returns:
         String representing the regex pattern for the expected JSON call.
     """
-    params: dict[str, Any] = {
-        "prompt": prompt.prompt.replace('"', "'"),
-        "name": definition.name,
-        "parameters": {},
-    }
 
-    timestamps = time.time_ns()
-    KEY_STRING = f"___JSON_TYPE_STRING__{timestamps}___"
-    KEY_NUMBER = f"___JSON_TYPE_NUMBER__{timestamps}___"
-    KEY_BOOL = f"___JSON_TYPE_BOOL__{timestamps}___"
+    with Constraint() as cst:
+        params: dict[str, Any] = {
+            "prompt": prompt.prompt,
+            "name": definition.name,
+            "parameters": {},
+        }
 
-    for name, data in definition.parameters.items():
-        match data.type:
-            case "string":
-                params["parameters"][name] = KEY_STRING
-            case "number":
-                params["parameters"][name] = KEY_NUMBER
-            case "bool":
-                params["parameters"][name] = KEY_BOOL
-            case _:
-                params["parameters"][name] = KEY_STRING
+        for name, data in definition.parameters.items():
+            match data.type:
+                case "number":
+                    params["parameters"][name] = cst.number()
+                case "bool":
+                    params["parameters"][name] = cst.bool()
+                case "string" | _:
+                    params["parameters"][name] = cst.string()
 
-    fmt = json.dumps(params)
-    fmt = regex.escape(fmt, special_only=True, literal_spaces=True)
-    fmt = fmt.replace(f'"{KEY_STRING}"', r"\"[^\"\\]*\"")
-    fmt = fmt.replace(
-        f'"{KEY_NUMBER}"',
-        r"[+-]?(\d{1,15}(\.\d{0,15})?|\.\d{1,15})([eE][+-]?\d{1,15})?",
-    )
-    fmt = fmt.replace(f'"{KEY_BOOL}"', r"(true|false)")
-
-    return fmt
+        return cst.build_json(params)
