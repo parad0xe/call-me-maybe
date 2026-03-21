@@ -84,12 +84,15 @@ class Constraint(BaseModel):
         fmt = json.dumps(data)
         return self.build(fmt, args)
 
-    def token(self, name: str) -> str:
+    def token(self, name: str, include_extra_quote: bool = False) -> str:
         """
         Registers a placeholder for a custom user-defined token.
 
         Args:
             name: The name identifying this token.
+            include_extra_quote: Whether to expect surrounding quotes.
+                (Useful when you need to enforce or omit double quotes in
+                the resulting JSON string.)
 
         Returns:
             The generated placeholder string to use in the template.
@@ -100,7 +103,7 @@ class Constraint(BaseModel):
             f"TOKEN_{name}",
             name,
             is_internal_arg=False,
-            include_quote=False,
+            include_quote=include_extra_quote,
         )
 
     def string_regex(self, include_extra_quote: bool = True) -> str:
@@ -109,6 +112,8 @@ class Constraint(BaseModel):
 
         Args:
             include_extra_quote: Whether to expect surrounding quotes.
+                (Useful when you need to enforce or omit double quotes in
+                the resulting JSON string.)
 
         Returns:
             The generated placeholder string to use in the template.
@@ -127,6 +132,8 @@ class Constraint(BaseModel):
 
         Args:
             include_extra_quote: Whether to expect surrounding quotes.
+                (Useful when you need to enforce or omit double quotes in
+                the resulting JSON string.)
 
         Returns:
             The generated placeholder string to use in the template.
@@ -145,6 +152,8 @@ class Constraint(BaseModel):
 
         Args:
             include_extra_quote: Whether to expect surrounding quotes.
+                (Useful when you need to enforce or omit double quotes in
+                the resulting JSON string.)
 
         Returns:
             The generated placeholder string to use in the template.
@@ -186,8 +195,9 @@ class Constraint(BaseModel):
             prefix: An identifier prefix for the specific token type.
             value: The regex pattern or argument name to inject.
             is_internal_arg: True if 'value' is an internal regex.
-            include_quote: True if the target must include surrounding
-                double quotes.
+            include_extra_quote: Whether to expect surrounding quotes.
+                (Useful when you need to enforce or omit double quotes in
+                the resulting JSON string.)
 
         Returns:
             The raw token string placeholder.
