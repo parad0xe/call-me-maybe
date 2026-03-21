@@ -3,7 +3,10 @@
     "prompt": ""
   },
   {
-    "prompt": "Qu'elle temps fait t'il?"
+	"prompt": "what is the capital of Luxembourg?"
+  },
+  {
+    "prompt": "Quelle est l'age de la plus vielle tortue"
   },
   { "prompt": "What is the weather in Paris?" },
   {
