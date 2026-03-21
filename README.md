@@ -1,38 +1,40 @@
-_This project has been created as part of the 42 curriculum by nlallema_
+_This project was developed as part of the 42 curriculum by nlallema_
 
-## Table of contents
+# Call me maybe
+
+## Table of Contents
 
 - [Description](#description)
 - [Usage](#usage)
-- [File formats](#file-formats)
+- [File Formats](#file-formats)
 - [Algorithm](#algorithm)
-- [Design decisions](#design-decisions)
-- [Performance analysis](#performance-analysis)
-- [Challenges faced](#challenges-faced)
-- [Testing strategy](#testing-strategy)
+- [Design Decisions](#design-decisions)
+- [Performance Analysis](#performance-analysis)
+- [Challenges Faced](#challenges-faced)
+- [Testing Strategy](#testing-strategy)
 - [Resources](#resources)
 
 ## Description
 
-**Call-me-maybe** is a command-line tool designed to translate natural language queries into structured JSON function calls. The project utilizes the Qwen3-0.6B model and relies on a robust architecture ensuring that the output strictly adheres to defined schemas, even with a small-scale language model.
+**Call-me-maybe** is a command-line utility designed to translate natural language queries into structured, schema-compliant JSON function calls. Powered by the Qwen3-0.6B model, the project leverages a highly constrained inference architecture. This ensures that the generated output strictly adheres to predefined data schemas, reliably overcoming the typical limitations of small-scale language models.
 
 ## Usage
 
 ### Installation
 
-Install dependencies and environment via uv:
+Install dependencies and set up the environment via uv:
 ```bash
 make install
 ```
 
 ### Execution
 
-By default, the program processes files in `data/input/` and writes to `data/output/`:
+By default, the program processes files in `data/input/` and writes the results to `data/output/`:
 ```bash
 make run [ARGS="..."]
 ```
 
-> This command automatically triggers `make install` to ensure the environment is ready.
+> This command automatically triggers `make install` to ensure the environment is fully ready before execution.
 
 #### Arguments & Options
 
@@ -41,12 +43,12 @@ make run [ARGS="..."]
 | --functions_definition | path to function definitions (default: data/input/functions_definition.json) (format: json) |
 | --input | path to user prompts (default: data/input/function_calling_tests.json) (format: json) |
 | --output | output file path for results (default: data/output/function_calls.json) (format: json) |
-| -t, --timeout | inference time limit in ms (default: 20000) |
+| -t, --timeout | inference time limit in milliseconds (default: 20000) |
 | -v, -vv | log verbosity levels (INFO or DEBUG levels) |
 | -S, --stop-on-first-error | halt execution immediately upon the first processing error |
 | --help, -h | show the help message and exit |
 
-#### Development commands
+#### Development Commands
 
 | Command | Description |
 |---------|-------------|
@@ -58,11 +60,11 @@ make run [ARGS="..."]
 
 ## File Formats
 
-The program relies on structured JSON files to configure the model capabilities and define the tasks to process.
+The program relies on structured JSON files to configure the model's capabilities and define the tasks to process.
 
-### Function definitions (`functions_definition.json`)
+### Function Definitions (`functions_definition.json`)
 
-This file contains a list of objects defining the tools available to the LLM. Each object must follow this schema:
+This file contains a list of objects defining the tools available to the LLM. Each object must follow this strict schema:
 
 - `name` (string): The unique identifier of the function (e.g., `fn_add_numbers`).
 - `description` (string): A textual explanation used by the model to determine when to call this function.
@@ -85,7 +87,7 @@ This file contains a list of objects defining the tools available to the LLM. Ea
 ]
 ```
 
-### Input prompts (`function_calling_tests.json`)
+### Input Prompts (`function_calling_tests.json`)
 
 This file lists the natural language requests that the system must process.
 
@@ -100,13 +102,13 @@ This file lists the natural language requests that the system must process.
 ]
 ```
 
-### Output results (`function_calls.json`)
+### Output Results (`function_calls.json`)
 
-The generated file contains structured function calls resulting from inference. Each entry includes the original prompt along with the extracted data:
+The generated file contains structured function calls resulting from the inference process. Each entry includes the original prompt along with the extracted data:
 
 - `prompt` (string): The original query.
 - `name` (string): The identified function name.
-- `parameters` (object): The extracted arguments with correct types.
+- `parameters` (object): The extracted arguments with correctly coerced types.
 
 **Example:**
 
@@ -123,69 +125,72 @@ The generated file contains structured function calls resulting from inference. 
 ]
 ```
 
-> **Note:** All files are validated at load time. If a required field is missing or a type is incorrect, the program raises a `SchemaValidationError`.
+> **Note:** All files are validated at load time. If a required field is missing or a type is incorrect, the program immediately raises a `SchemaValidationError`.
 
 ## Algorithm
 
-The implementation is based on an inference loop controlled by dynamic syntax constraints:
-- **Regex pattern generation:** A regex pattern is dynamically built for each function. It defines the expected JSON structure, including parameter types such as string, number, and bool.
-- **Constrained inference:** During token-by-token generation, the system decodes candidate tokens and verifies if they partially match the regex pattern.
-- **Logits filtering:** Only tokens that maintain a valid JSON structure according to the function schema are kept. If a token breaks the expected syntax or type, it is ignored in favor of the next most probable candidate.
-- **Fallback management:** An internal function `fn_not_implemented` is systematically injected to allow the model to report queries that do not match any known definition.
+The core implementation relies on an inference loop governed by dynamic syntax constraints:
 
-## Design decisions
+- **Regex Pattern Generation:** A strict regex pattern is dynamically constructed for each target function. It defines the exact expected JSON structure, enforcing parameter types (string, number, boolean).
+- **Constrained Inference:** During token-by-token generation, the system decodes candidate tokens and evaluates them against the active regex pattern using partial matching.
+- **Logits Filtering:** Only tokens that preserve a valid JSON structure and comply with the function schema are authorized. Any token violating the syntax or type constraints is discarded in favor of the next highest-probability candidate.
+- **Fallback Management:** A default `function_not_implemented_yet` tool is systematically injected into the context, empowering the model to gracefully handle queries that fall outside the scope of defined functions.
 
-- **Pydantic for data integrity:** Every internal data structure — including command-line settings, function definitions, and user prompts — is implemented using Pydantic `BaseModel`. The use of `extra="forbid"` and `frozen=True` ensures strict schema compliance and prevents silent data corruption throughout the inference pipeline.
+## Design Decisions
 
-- **Two-Stage inference pipeline:** To optimize accuracy on the 0.6B parameter model, the process is split into two specialized passes:
-  - **Function identification:** A first pass matches the user prompt against available function descriptions to select the correct name.
-  - **Parameter extraction:** A second targeted pass focuses exclusively on extracting and typing the arguments required by the identified schema.
+- **Pydantic for Data Integrity:** All internal data structures are strictly typed using Pydantic `BaseModel`. Enforcing `extra="forbid"` and `frozen=True` guarantees absolute schema compliance and eliminates silent data mutation across the pipeline.
+- **Three-Stage Inference Pipeline:** To maximize the accuracy of the 0.6B parameter model, the workflow is divided into three focused passes:
+  - *Intent Clarification:* The first pass rephrases the user's raw prompt to extract a clean, context-aware description of their core intent.
+  - *Function Routing:* The second pass matches this clarified intent against available tool descriptions to accurately identify the target function.
+  - *Parameter Extraction:* The final pass is heavily constrained and focuses solely on extracting and typing the specific arguments required by the chosen schema.
+- **Constrained Decoding via Regex:** Instead of relying on the model's spontaneous formatting capabilities, the system uses dynamic regex patterns to filter logits. This guarantees that every generated token contributes to a syntactically valid JSON object.
+- **Strict Inference Timeout:** A millisecond timer monitors each inference cycle against the user-defined `--timeout` to prevent infinite loops or stalled processing on highly ambiguous prompts.
+- **Granular Error Domain Isolation:** The application separates concerns through a custom exception hierarchy:
+  - *StorageError:* Handles filesystem issues such as permissions or missing files.
+  - *SchemaError:* Manages data integrity issues, including invalid JSON structures, Pydantic validation failures and missing Constraint builder arguments.
 
-- **Constrained decoding via regex:** Instead of relying on model spontaneity, the system uses dynamic regex patterns to filter logits. This guarantees that every generated token contributes to a syntactically valid JSON object that matches the function's signature.
+## Performance Analysis
 
-- **Strict inference timeout:** A millisecond timer monitors each inference cycle against the user-defined `--timeout` to prevent infinite loops or stalled processing on ambiguous prompts.
+- **Deterministic Type Coercion:** The system guarantees typing reliability through a formatting engine that injects specialized regex placeholders directly into the generation sequence:
+  - *Numbers:* Constrained to signed integers, decimals, and scientific notation (e.g., `-1.23e+10` or `.2`).
+  - *Booleans:* Strictly limited to the `true` or `false` tokens.
+  - *Strings:* Confined within literal quote boundaries to prevent JSON escaping errors.
+- **Latency vs. Accuracy Trade-off:** Although regex-based constrained decoding introduces a marginal computational overhead during logit filtering, it pays off by guaranteeing 100% syntactically valid JSON outputs and flawless argument typing.
+- **Multi-Stage Latency Impact:** While the three-stage inference pipeline is crucial for the 0.6B model's accuracy, it inherently increases total execution time. Performing three distinct LLM calls, combined with the large context windows required by extensive prompts and function descriptions, introduces noticeable latency compared to a standard single-pass approach.
 
-- **Granular error domain isolation:** The application separates concerns through a custom exception hierarchy:
-  - **StorageError:** Handles filesystem issues such as permissions or missing files.
-  - **SchemaError:** Manages data integrity issues, including invalid JSON structures or Pydantic validation failures.
+## Challenges Faced
 
-## Performance analysis
-
-- **Deterministic type coercion:** The system achieves typing reliability by using a formatting engine that injects specialized regex placeholders into the generation process. Rather than hoping for correct formatting, the engine strictly constrains the LLM's output:
-  - **Numbers:** Constrained to the pattern `[+-]?(\d{1,15}(\.\d{0,15})?|\.\d{1,15})([eE][+-]?\d{1,15})?`, supporting signed integers, decimal numbers, and scientific notation (e.g., -1.23e+10).
-  - **Booleans:** Restricted to the specific tokens `true` or `false`.
-  - **Strings:** Enclosed in literal quote boundaries `"[^"\\]*"` to ensure they remain valid JSON primitives.
-
-- **Latency vs. accuracy trade-off:** While constrained decoding adds a slight computational overhead for logit filtering, it guarantees 100% syntactically valid JSON output and reliable function argument typing.
-
-## Challenges faced
-
-- **Real-time token validation (partial inference):** Since LLMs generate text token by token, standard regex matching is insufficient as it only validates complete strings. To address this, the system leverages `regex.fullmatch` with the `partial=True` flag, allowing it to determine whether an intermediate string can still evolve into a valid match. This enables real-time filtering of invalid tokens during generation, ensuring that only candidates compatible with the target pattern are considered.
+- **Real-Time Token Validation (Partial Inference):** Because LLMs stream text token by token, standard regex matching is inadequate as it requires complete strings. To overcome this, the engine employs `regex.fullmatch` with the `partial=True` flag. This allows the system to determine if an incomplete, mid-generation string can still logically resolve into a valid match, effectively filtering out invalid syntactic branches in real-time.
+- **Model Precision & Task Decomposition:** Achieving high accuracy with a compact 0.6B parameter model is notoriously difficult when asking it to perform complex reasoning in a single pass. To compensate for this inherent lack of precision, the architecture had to be split into the three-stage pipeline. By strictly isolating intent clarification, function routing, and parameter extraction, the model's cognitive load is minimized, drastically improving overall reliability.
+- **Context Window Limitations & Definition Chunking:** During the second stage (Function Routing), injecting the descriptions of all available functions into a single prompt often overwhelmed the model's limited context window, leading to degraded decision-making or truncated inputs. To solve this, the engine implements a chunking mechanism that batches function definitions into smaller, manageable groups. This ensures the model evaluates each subset of tools effectively without exceeding its context limits.
+- **Fallback via Systematic Injection:** To maintain reliability during the chunked routing process, a specialized `function_not_implemented_yet` definition is systematically injected into every single batch. This provides the model with a consistent fallback option, allowing it to explicitly reject a match within a specific subset if no coherent function is found, rather than forcing an incorrect or hallucinated selection.
 
 ## Testing Strategy
 
-- **Schema validation:** Compliance testing of Pydantic models using the `extra="forbid"` option to detect any drift or unexpected fields in input data.
-- **I/O robustness:** Management of file permissions and automatic directory creation to ensure results are saved safely, even if the target path is missing.
-- **Prompt edge cases:** Systematic validation against a variety of input scenarios to ensure stable behavior:
-  - **Empty prompts:** Ensuring the pipeline identifies and skips empty input strings to prevent wasted inference cycles.
-  - **Ambiguous prompts:** Testing the model's ability to remain within regex constraints even when the natural language intent is unclear.
-  - **Unmapped prompts:** Verifying that the `fn_not_implemented` fallback correctly handles requests that do not match any available function.
-- **Custom definition extensibility:** Testing the dynamic regex generator with new function definitions to confirm it can enforce complex schemas without requiring code modifications.
+- **Schema Validation:** Compliance testing of Pydantic models using the `extra="forbid"` option to detect any drift or unexpected fields in input data.
+- **I/O Robustness:** Management of file permissions and automatic directory creation to ensure results are saved safely, even if the target path is missing.
+- **Prompt Edge Cases:** Systematic validation against a variety of input scenarios to ensure stable behavior:
+  - *Empty Prompts:* Ensuring the pipeline identifies and skips empty input strings to prevent wasted inference cycles.
+  - *Ambiguous Prompts:* Testing the model's ability to remain within regex constraints even when the natural language intent is unclear.
+  - *Unmapped Prompts:* Verifying that the `function_not_implemented_yet` fallback correctly handles requests that do not match any available function.
+- **Custom Definition Extensibility:** Testing the dynamic regex generator with new function definitions to confirm it can enforce complex schemas without requiring underlying code modifications.
 
 ## Resources
 
-#### AI usage
+### AI Usage Acknowledgement
 
-Used for code refactoring, documenting classes according to Google-style standards, and assisting in generating the README.
+The development of this project was supported by AI for:
+- **Code Refactoring**
+- **Documentation**: Generating Google-style docstrings.
+- **Prompt Engineering**: Assisting in the design and generation of some robust inference prompts.
+- **Project Communication**: Drafting and formatting the README.
 
-#### Documentation & research:
+### Research & Documentation
 
-##### JSON
+#### Structured Data & JSON
+- [Web: Introducing JSON](https://www.json.org/json-en.html)
 
-[Web: Introducing JSON](https://www.json.org/json-en.html)
-
-##### Constrained decoding
-
-[Web: Non-Invasive Constrained Generation](https://arxiv.org/html/2403.06988v1)\
-[Web: Diffusion LLMs can think EoS-by-EoS](https://arxiv.org/html/2603.05197v1)\
-[Web: Implementing Constrained Decoding](https://medium.com/@albersj66/part-6-implementing-constrained-decoding-for-phi-3-vision-2c72a1be6a17)
+#### Constrained Decoding Techniques
+- [Web: Non-Invasive Constrained Generation](https://arxiv.org/html/2403.06988v1)
+- [Web: Diffusion LLMs can think EoS-by-EoS](https://arxiv.org/html/2603.05197v1)
+- [Web: Implementing Constrained Decoding](https://medium.com/@albersj66/part-6-implementing-constrained-decoding-for-phi-3-vision-2c72a1be6a17)
