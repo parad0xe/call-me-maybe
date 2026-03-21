@@ -195,6 +195,6 @@ The development of this project was supported by AI for:
 
 #### Constrained Decoding Techniques
 
-- [Web: Non-Invasive Constrained Generation](https://arxiv.org/html/2403.06988v1) — Research on enforcing syntax without retraining models.
-- [Web: Diffusion LLMs can think EoS-by-EoS](https://arxiv.org/html/2603.05197v1) — Insights into token-level control during generation.
-- [Web: Implementing Constrained Decoding](https://medium.com/@albersj66/part-6-implementing-constrained-decoding-for-phi-3-vision-2c72a1be6a17) — A guide on logit filtering and schema enforcement.
+- [Web: Non-Invasive Constrained Generation](https://arxiv.org/html/2403.06988v1)
+- [Web: Diffusion LLMs can think EoS-by-EoS](https://arxiv.org/html/2603.05197v1)
+- [Web: Implementing Constrained Decoding](https://medium.com/@albersj66/part-6-implementing-constrained-decoding-for-phi-3-vision-2c72a1be6a17)
