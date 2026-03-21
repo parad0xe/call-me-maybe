@@ -182,7 +182,7 @@ The core implementation relies on an inference loop governed by dynamic syntax c
 The development of this project was supported by AI for:
 - **Code Refactoring**
 - **Documentation**: Generating Google-style docstrings.
-- **Prompt Engineering**: Assisting in the design and generation of some robust inference prompts.
+- **Prompt Engineering**: Assisting in the design and generation of some prompts.
 - **Project Communication**: Drafting and formatting the README.
 
 ### Research & Documentation
