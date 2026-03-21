@@ -59,6 +59,18 @@
     }
   },
   {
+	"name": "fn_building_height",
+	"description": "Gives the height of the tallest building by city.",
+	"parameters": {
+		"city": {
+			"type": "string"
+		}
+	},
+  	"returns": {
+		"type": "string"
+	}
+  },
+  {
     "name": "fn_greet",
     "description": "Generate a greeting message for a person by name.",
     "parameters": {
