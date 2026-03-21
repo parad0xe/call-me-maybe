@@ -187,10 +187,14 @@ The development of this project was supported by AI for:
 
 ### Research & Documentation
 
-#### Structured Data & JSON
+#### Python & Tooling
+
 - [Web: Introducing JSON](https://www.json.org/json-en.html)
+- [Web: Advanced Regex Implementation](https://pypi.org/project/regex/)
+- [Web: Creating Python Context Managers](https://www.pythonmorsels.com/creating-a-context-manager/#:~:text=Context%20managers%20are%20objects%20that,Python%20Tutor%20context%20manager%20example.)
 
 #### Constrained Decoding Techniques
-- [Web: Non-Invasive Constrained Generation](https://arxiv.org/html/2403.06988v1)
-- [Web: Diffusion LLMs can think EoS-by-EoS](https://arxiv.org/html/2603.05197v1)
-- [Web: Implementing Constrained Decoding](https://medium.com/@albersj66/part-6-implementing-constrained-decoding-for-phi-3-vision-2c72a1be6a17)
+
+- [Web: Non-Invasive Constrained Generation](https://arxiv.org/html/2403.06988v1) — Research on enforcing syntax without retraining models.
+- [Web: Diffusion LLMs can think EoS-by-EoS](https://arxiv.org/html/2603.05197v1) — Insights into token-level control during generation.
+- [Web: Implementing Constrained Decoding](https://medium.com/@albersj66/part-6-implementing-constrained-decoding-for-phi-3-vision-2c72a1be6a17) — A guide on logit filtering and schema enforcement.
