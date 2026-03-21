@@ -22,8 +22,8 @@ FIND_CACHES = find . \
 # tools
 UV := uv
 PYTHON := $(VENV)/bin/python3
-FLAKE8 := $(PYTHON) -m flake8 --exclude $(VENV),libs,.git
-MYPY := $(PYTHON) -m mypy --exclude $(VENV) --exclude libs --exclude .git
+FLAKE8 := $(PYTHON) -m flake8 --exclude $(VENV),libs,.git,llm_sdk
+MYPY := $(PYTHON) -m mypy --exclude $(VENV) --exclude libs --exclude .git --exclude llm_sdk
 
 # rules
 .PHONY: install

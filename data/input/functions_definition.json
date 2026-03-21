@@ -1,5 +1,32 @@
 [
   {
+    "name": "fn_validate",
+    "description": "Validates the provided value.",
+    "parameters": {
+      "value": {
+        "type": "string"
+      },
+	  "strict": {
+		"type": "bool"
+	  }
+    },
+    "returns": {
+      "type": "bool"
+    }
+  },
+  {
+    "name": "get_capital",
+    "description": "Find the capital using the country name.",
+    "parameters": {
+      "country": {
+        "type": "string"
+      }
+    },
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
     "name": "fn_add_numbers",
     "description": "Add two numbers together and return their sum.",
     "parameters": {
@@ -13,6 +40,35 @@
     "returns": {
       "type": "number"
     }
+  },
+  {
+    "name": "fn_get_weather",
+    "description": "Get the current temperature in a city. (Celsius or Fahrenheit)",
+    "parameters": {
+      "city": { "type": "string" },
+      "units": { "type": "string" }
+    },
+    "returns": { "type": "string" }
+  },
+  {
+    "name": "fn_now",
+    "description": "Get current time.",
+    "parameters": {},
+    "returns": {
+      "type": "string"
+    }
+  },
+  {
+	"name": "fn_building_height",
+	"description": "Gives the height of the tallest building by city.",
+	"parameters": {
+		"city": {
+			"type": "string"
+		}
+	},
+  	"returns": {
+		"type": "string"
+	}
   },
   {
     "name": "fn_greet",

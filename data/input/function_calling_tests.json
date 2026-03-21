@@ -1,6 +1,31 @@
 [
   {
-    "prompt": "What is the sum of 2 and 3?"
+    "prompt": ""
+  },
+  {
+    "prompt": "what is the tallest building of New York?"
+  },
+  {
+	"prompt": "what is the capital of Luxembourg?"
+  },
+  {
+    "prompt": "Quelle est l'age de la plus vielle tortue"
+  },
+  { "prompt": "What is the weather in Paris?" },
+  {
+    "prompt": "What time is it?"
+  },
+  {
+    "prompt": "Qu'est la somme de un + deux ?"
+  },
+  {
+    "prompt": "validate 'greet shrek' (with no strict mode)"
+  },
+  {
+    "prompt": "Reverse the string 'What is the sum of 2 and 3?'"
+  },
+  {
+    "prompt": "What is the sum of 2e-5 and 3e8?"
   },
   {
     "prompt": "What is the sum of 265 and 345?"
