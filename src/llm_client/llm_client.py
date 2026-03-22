@@ -115,7 +115,6 @@ class LLMClient(BaseModel):
                 "---\n\n"
                 "Now, process the following input.\n\n"
                 f"Input text:\n{formatted_prompt}\n\n"
-                "Rephrased Intent:\n"
             ),
             fmt=fmt,
             timeout=self.settings.timeout,
