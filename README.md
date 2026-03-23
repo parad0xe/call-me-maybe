@@ -43,7 +43,7 @@ make run [ARGS="..."]
 | --functions_definition | path to function definitions (default: data/input/functions_definition.json) (format: json) |
 | --input | path to user prompts (default: data/input/function_calling_tests.json) (format: json) |
 | --output | output file path for results (default: data/output/function_calls.json) (format: json) |
-| -t, --timeout | inference time limit in milliseconds (default: 20000) |
+| -t, --timeout | inference time limit in milliseconds (default: 40000) |
 | -v, -vv | log verbosity levels (INFO or DEBUG levels) |
 | -S, --stop-on-first-error | halt execution immediately upon the first processing error |
 | --help, -h | show the help message and exit |
@@ -139,10 +139,9 @@ The core implementation relies on an inference loop governed by dynamic syntax c
 ## Design decisions
 
 - **Pydantic for data integrity:** All internal data structures are strictly typed using Pydantic `BaseModel`. Enforcing `extra="forbid"` and `frozen=True` guarantees absolute schema compliance and eliminates silent data mutation across the pipeline.
-- **Three-stage inference pipeline:** To maximize the accuracy of the 0.6B parameter model, the workflow is divided into three focused passes:
-  1. *intent clarification:* The first pass rephrases the user's raw prompt to extract a clean, context-aware description of their core intent.
-  2. *function routing:* The second pass matches this clarified intent against available tool descriptions to accurately identify the target function.
-  3. *parameter extraction:* The final pass is heavily constrained and focuses solely on extracting and typing the specific arguments required by the chosen schema.
+- **Two-stage inference pipeline:** To maximize the accuracy of the 0.6B parameter model, the workflow is divided into two focused passes:
+  1. *function routing:* The first pass matches the input against available tool descriptions to accurately identify the target function.
+  2. *parameter extraction:* The second pass is heavily constrained and focuses solely on extracting and typing the specific arguments required by the chosen schema.
 - **Constrained decoding via regex:** Instead of relying on the model's spontaneous formatting capabilities, the system uses dynamic regex patterns to filter logits. This guarantees that every generated token contributes to a syntactically valid JSON object.
 - **Strict inference timeout:** A millisecond timer monitors each inference cycle against the user-defined `--timeout` to prevent infinite loops or stalled processing on highly ambiguous prompts.
 - **Granular error domain isolation:** The application separates concerns through a custom exception hierarchy:
@@ -156,13 +155,13 @@ The core implementation relies on an inference loop governed by dynamic syntax c
   - *booleans:* Strictly limited to the `true` or `false` tokens.
   - *strings:* Confined within literal quote boundaries to prevent JSON escaping errors.
 - **Latency vs. accuracy trade-off:** Although regex-based constrained decoding introduces a marginal computational overhead during logit filtering, it pays off by guaranteeing 100% syntactically valid JSON outputs and flawless argument typing.
-- **Multi-stage latency impact:** While the three-stage inference pipeline is crucial for the 0.6B model's accuracy, it inherently increases total execution time. Performing three distinct LLM calls, combined with the large context windows required by extensive prompts and function descriptions, introduces noticeable latency compared to a standard single-pass approach.
+- **Multi-stage latency impact:** While the two-stage inference pipeline is crucial for the 0.6B model's accuracy, it inherently increases total execution time. Performing three distinct LLM calls, combined with the large context windows required by extensive prompts and function descriptions, introduces noticeable latency compared to a standard single-pass approach.
 
 ## Challenges faced
 
 - **Real-time token validation (partial inference):** Because LLMs stream text token by token, standard regex matching is inadequate as it requires complete strings. To overcome this, the engine employs `regex.fullmatch` with the `partial=True` flag. This allows the system to determine if an incomplete, mid-generation string can still logically resolve into a valid match, effectively filtering out invalid syntactic branches in real-time.
-- **Model precision & task decomposition:** Achieving high accuracy with a compact 0.6B parameter model is notoriously difficult when asking it to perform complex reasoning in a single pass. To compensate for this inherent lack of precision, the architecture had to be split into the three-stage pipeline. By strictly isolating intent clarification, function routing, and parameter extraction, the model's cognitive load is minimized, drastically improving overall reliability.
-- **Context window limitations & definition chunking:** During the second stage (Function Routing), injecting the descriptions of all available functions into a single prompt often overwhelmed the model's limited context window, leading to degraded decision-making or truncated inputs. To solve this, the engine implements a chunking mechanism that batches function definitions into smaller, manageable groups. This ensures the model evaluates each subset of tools effectively without exceeding its context limits.
+- **Model precision & task decomposition:** Achieving high accuracy with a compact 0.6B parameter model is notoriously difficult when asking it to perform complex reasoning in a single pass. To compensate for this inherent lack of precision, the architecture had to be split into the two-stage pipeline. By strictly isolating function routing, and parameter extraction, the model's cognitive load is minimized, drastically improving overall reliability.
+- **Context window limitations & definition chunking:** During the first stage (Function Routing), injecting the descriptions of all available functions into a single prompt often overwhelmed the model's limited context window, leading to degraded decision-making or truncated inputs. To solve this, the engine implements a chunking mechanism that batches function definitions into smaller, manageable groups. This ensures the model evaluates each subset of tools effectively without exceeding its context limits.
 - **Fallback via systematic injection:** To maintain reliability during the chunked routing process, a specialized `function_not_implemented_yet` definition is systematically injected into every single batch. This provides the model with a consistent fallback option, allowing it to explicitly reject a match within a specific subset if no coherent function is found, rather than forcing an incorrect or hallucinated selection.
 
 ## Testing strategy
