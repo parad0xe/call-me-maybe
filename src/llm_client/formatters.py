@@ -252,8 +252,7 @@ def build_function_name_pattern(prompt: Prompt, functions: list[str]) -> str:
     with Constraint() as cst:
         safe_functions = [cst.safe_literal(f) for f in functions]
         fmt = {
-            "prompt": prompt.prompt,
-            "api_function": cst.token("functions"),
+            "tool": cst.token("functions"),
         }
         return cst.build_json(
             fmt, {"functions": rf"({'|'.join(safe_functions)})"}
