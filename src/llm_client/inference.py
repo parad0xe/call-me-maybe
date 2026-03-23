@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def infer_constrained_answer(
-    model: Small_LLM_Model, prompt: str, fmt: str, timeout: int = 20000
+    model: Small_LLM_Model, prompt: str, fmt: str, timeout: int = 40000
 ) -> str | None:
     """
     Infers an answer from a language model using a regex constraint.

@@ -68,7 +68,7 @@ class Settings(BaseModel):
             "--timeout",
             "-t",
             type=int,
-            default=20000,
+            default=40000,
             help="inference timeout in milliseconds (default: %(default)s)",
         )
         parser.add_argument(

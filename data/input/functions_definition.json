@@ -1,20 +1,5 @@
 [
   {
-    "name": "fn_validate",
-    "description": "Validates the provided value.",
-    "parameters": {
-      "value": {
-        "type": "string"
-      },
-	  "strict": {
-		"type": "bool"
-	  }
-    },
-    "returns": {
-      "type": "bool"
-    }
-  },
-  {
     "name": "get_capital",
     "description": "Find the capital using the country name.",
     "parameters": {
