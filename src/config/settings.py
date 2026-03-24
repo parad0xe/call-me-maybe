@@ -54,7 +54,7 @@ class Settings(BaseModel):
         parser.add_argument(
             "--output",
             type=str,
-            default="data/output/function_calls.json",
+            default="data/output/function_calling_results.json",
             help="path for output JSON results (default: %(default)s)",
         )
         parser.add_argument(
