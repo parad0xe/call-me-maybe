@@ -42,7 +42,7 @@ make run [ARGS="..."]
 |-----------------|-------------|
 | --functions_definition | path to function definitions (default: data/input/functions_definition.json) (format: json) |
 | --input | path to user prompts (default: data/input/function_calling_tests.json) (format: json) |
-| --output | output file path for results (default: data/output/function_calls.json) (format: json) |
+| --output | output file path for results (default: data/output/function_calling_results.json) (format: json) |
 | -t, --timeout | inference time limit in milliseconds (default: 40000) |
 | -v, -vv | log verbosity levels (INFO or DEBUG levels) |
 | -S, --stop-on-first-error | halt execution immediately upon the first processing error |
@@ -102,7 +102,7 @@ This file lists the natural language requests that the system must process.
 ]
 ```
 
-### Output results (`function_calls.json`)
+### Output results (`function_calling_results.json`)
 
 The generated file contains structured function calls resulting from the inference process. Each entry includes the original prompt along with the extracted data:
 
